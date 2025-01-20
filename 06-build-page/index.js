@@ -82,10 +82,13 @@ async function replaceTemplate() {
     let templateFile = await fsPromises.readFile(templatePath, 'utf8')
     const components = await fsPromises.readdir(componentsPath);
     for (let component of components) {
-        const componentPath = path.join(componentsPath, component)
-        const content = await fsPromises.readFile(componentPath, 'utf-8')
-        const tag = `{{${path.parse(component).name}}}`;
-        templateFile = templateFile.replace(new RegExp(tag, 'g'), content);
+        if (path.extname(component) === '.html') {
+            const componentPath = path.join(componentsPath, component)
+            const content = await fsPromises.readFile(componentPath, 'utf-8')
+            const tag = `{{${path.parse(component).name}}}`;
+            templateFile = templateFile.replace(new RegExp(tag, 'g'), content);
+        }
+
     }
     await fsPromises.writeFile(indexPath, templateFile, 'utf8');
 
