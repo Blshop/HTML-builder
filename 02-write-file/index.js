@@ -5,16 +5,15 @@ const fileName = 'text.txt'
 const pathToFile = path.join(__dirname, fileName)
 
 const ws = fs.createWriteStream(pathToFile, { flags: 'a', encoding: 'utf8' })
-
-
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 })
+rl.on('close', () => { console.log('\n Operation successfully ended!') });
 
 function writeToFile() {
     rl.question('Please enter any text: ', (input) => {
-        if (input.trim() === "exit") {
+        if (input === "exit") {
             ws.end()
             rl.close()
         }
@@ -24,7 +23,4 @@ function writeToFile() {
         }
     })
 }
-
 writeToFile()
-
-rl.on('close', () => { console.log('\n Operation successfully ended!') });
