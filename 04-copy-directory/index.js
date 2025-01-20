@@ -1,11 +1,12 @@
 const fs = require('fs').promises
 const path = require('path')
+
 const newFolder = 'files-copy'
 const oldFolder = 'files'
 const oldPath = path.resolve(__dirname, oldFolder)
 const newPath = path.resolve(__dirname, newFolder)
 
-async function copyDir() {
+async function copyDir(oldPath, newPath) {
     try {
         await fs.access(newPath)
     }
@@ -14,29 +15,36 @@ async function copyDir() {
             await fs.mkdir(newPath, { recursive: true })
         }
     }
-    const toCopyFiles = await fs.readdir(oldPath)
-    for (let file of toCopyFiles) {
-        const oldFilePath = path.join(oldPath, file)
-        const newFilePath = path.join(newPath, file)
+    const toCopyItems = await fs.readdir(oldPath, { withFileTypes: true })
+    for (let item of toCopyItems) {
+        const oldItemPath = path.join(oldPath, item.name)
+        const newItemPath = path.join(newPath, item.name)
+        if (item.isDirectory()) {
+            await copyDir(oldItemPath, newItemPath)
+        }
+        else {
+            const oldStat = await fs.stat(oldItemPath);
+            const newStat = await fs.stat(newItemPath).catch(() => null);
 
-
-        const oldStat = await fs.stat(oldFilePath);
-        const newStat = await fs.stat(newFilePath).catch(() => null);
-
-        if (!newStat || oldStat.mtime > newStat.mtime) {
-            await fs.copyFile(oldFilePath, newFilePath)
+            if (!newStat || oldStat.mtime > newStat.mtime) {
+                await fs.copyFile(oldItemPath, newItemPath)
+            }
         }
     }
 
-    const copiedFiles = await fs.readdir(newPath)
-    for (let file of copiedFiles) {
-        const oldFilePath = path.join(oldPath, file)
-        const newFilePath = path.join(newPath, file)
-
-        const oldStat = await fs.stat(oldFilePath).catch(() => null);
-        if (!oldStat) {
-            await fs.unlink(newFilePath)
+    const copiedItems = await fs.readdir(newPath, { withFileTypes: true })
+    for (let item of copiedItems) {
+        const oldItemPath = path.join(oldPath, item.name)
+        const newItemPath = path.join(newPath, item.name)
+        try {
+            await fs.access(oldItemPath)
+        }
+        catch (err) {
+            if (err.code === 'ENOENT') {
+                if (item.isDirectory()) await fs.rm(newItemPath, { recursive: true })
+                else await fs.unlink(newItemPath)
+            }
         }
     }
 }
-copyDir()
+copyDir(oldPath, newPath)
