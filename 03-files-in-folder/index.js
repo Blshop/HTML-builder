@@ -11,8 +11,8 @@ async function readFilesInfo() {
         if (file.isFile()) {
             filePath = path.join(folderPath, file.name)
             fileSize = (await fs.stat(filePath)).size
-            fileName = file.name
-            fileExt = path.extname(fileName)
+            fileName = path.parse(file.name).name
+            fileExt = path.extname(file.name)
             console.log(`${fileName} - ${fileExt.slice(1)} - ${fileSize}`)
         }
     }
